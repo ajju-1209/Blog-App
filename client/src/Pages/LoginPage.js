@@ -1,9 +1,49 @@
+import { useState } from "react";
+import { Navigate, redirect } from "react-router-dom";
+
 export default function LoginPage(){
+
+  //use state hook for setting username and password
+  const [username,setUsername]=useState('');
+  const [password,setPassword]=useState('');
+  const [redirect,setRedirect]=useState(false);
+
+  async function login(event){
+    event.preventDefault();
+
+    //sending data to server using post request
+    //this is one way of doing we can also use axios instead 
+    //of fetch
+    const response=await fetch('http://localhost:4000/login',{
+      method:'POST',
+      body:JSON.stringify({username,password}),
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+    });
+    //if login is succesfull we need to redirect to home page
+    if(response.ok){
+      setRedirect(true);
+    }
+    else{
+      alert('wrong credentials');
+    }
+  };
+
+  if(redirect){
+    return <Navigate to={'/'}/>
+  }
+
   return(
-    <form className="login">
+    <form className="login" onSubmit={login}>
       <h1>Login</h1>
-      <input type="text" placeholder="usename"/>
-      <input type="password" placeholder="password"/>
+      <input type="text"
+             placeholder="usename"
+             onChange={event => setUsername(event.target.value)}
+             />
+      <input type="password"
+             placeholder="password"
+             onChange={event => setPassword(event.target.value)}
+             />
       <button>Login</button>
     </form>
   );
