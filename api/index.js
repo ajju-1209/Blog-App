@@ -25,7 +25,7 @@ const salt=bcrypt.genSaltSync(10);//study about this
 
 
 const jwt=require('jsonwebtoken');
-const secret='asdojfp;n094uf0sdnvnsdvkdsnvk';
+const secret='asdojfpn094uf0sdnvnsdvkdsnvk';
 //middleware 
 //when passing credentials we need set up additional properties
 app.use(cors({credentials:true,origin:'http://localhost:3000'}));
