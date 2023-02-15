@@ -4,8 +4,25 @@ const cors=require('cors');
 const { default: mongoose } = require('mongoose');
 const User=require('./Models/User');
 
+//It is used to suppress the warnings given by mongoose
+//At this point even i don't know what those warnings meant
+//so i just suppressed them (May be i'look onto them in future!)
+mongoose.set('strictQuery',true);
+
 //configuring inorder to access env variables
 require('dotenv').config();
+
+//For reading cookies
+const cookieParser=require('cookie-parser');
+
+const multer=require('multer');
+
+const uploadMiddleware=multer({dest:'uploads/'});
+
+const fs=require('fs');//fileSystem module of node
+
+const Post=require("./Models/Post");
+
 
 
 //bcrypt
@@ -25,11 +42,15 @@ const salt=bcrypt.genSaltSync(10);//study about this
 
 
 const jwt=require('jsonwebtoken');
-const secret='asdojfpn094uf0sdnvnsdvkdsnvk';
+
+const path = require('path');
+
 //middleware 
 //when passing credentials we need set up additional properties
 app.use(cors({credentials:true,origin:'http://localhost:3000'}));
 app.use(express.json());
+
+app.use(cookieParser());
 
 //connecting to our database using mongoose library
 // async ()=>{
@@ -37,7 +58,9 @@ app.use(express.json());
 //   return c;
 // };
 
-mongoose.connect('mongodb+srv://ajju-1209:Yk9MJ2GHBwEVUzOS@cluster0.ktyyi0s.mongodb.net/?retryWrites=true&w=majority');
+mongoose.connect('mongodb+srv://ajju-1209:Yk9MJ2GHBwEVUzOS@cluster0.ktyyi0s.mongodb.net/?retryWrites=true&w=majority',{
+
+});
 
 //just for testing purpose
 app.get('/',(req,res)=>{
@@ -61,6 +84,8 @@ app.post('/register',async (req,res)=>{
   }
 });
 
+
+
 //if post request comes to '/login' page 
 
 app.post('/login',async (req,res)=>{
@@ -71,6 +96,7 @@ app.post('/login',async (req,res)=>{
     //so that we can match whether password entered
     //by user now matches password in database or not.
 
+    console.log(username,password);
     const userDoc=await User.findOne({username});
 
     //comparing the value whether password is matching or not
@@ -90,8 +116,13 @@ app.post('/login',async (req,res)=>{
       //to access confidential data and routes
 
       //sending username and id in payload
+
       jwt.sign({username,id:userDoc._id},process.env.JWT_SECRET,{},(err,token)=>{
         if(err){
+
+          //just for testing purpose
+          // console.log('No token generated');
+          // console.log(err);
           throw err;
         }
         else{
@@ -100,7 +131,11 @@ app.post('/login',async (req,res)=>{
           //http requests so that server can authorize whether it 
           //is same user making requests who logged in.
 
-          res.cookie('token',token).json('ok');
+            console.log('token generated ',userDoc._id);
+            res.cookie('token',token).json({
+            id:userDoc._id,
+            username,
+          });
         }
       });
     }
@@ -113,6 +148,61 @@ app.post('/login',async (req,res)=>{
   }
 });
 
+
+
+//Handling get request at route '/profile' 
+
+app.get('/profile',(req,res)=>{
+
+  //client is doing get request in order to display our profile
+  //Client is sending jwt along with request.
+  //Server will verify whether it is same client whom this token was 
+  //provided or token has been altererd.
+
+  //grabbing the token from cookies
+  const {token}=req.cookies;
+  //verifying the token
+  jwt.verify(token,process.env.JWT_SECRET,{},(err,info)=>{
+    if(err) throw err;
+    res.json(info);
+  });
+  res.json(req.cookies);//for reading cookies we need a cookie parser
+});
+
+//Handling POST request at route '/logout'
+
+app.post('/logout',(req,res)=>{
+  res.cookie('token','').json('ok');
+});
+
+//Handling POST request at route '/post'
+
+app.post('/post',uploadMiddleware.single('file'),async (req,res)=>{
+  console.log(req.file);
+  const {originalname,path}=req.file;
+  const parts=originalname.split('.');
+  const ext=parts[parts.length -1];
+  const newPath=path+'.'+ext;
+  fs.renameSync(path,newPath);
+
+  const {title,summary,content}=req.body;
+  const postDoc=await Post.create({
+    title,
+    summary,
+    content,
+    conver:newPath,
+  });
+
+  res.json(postDoc);
+});
+
+//Request to get all the post present in database
+
+app.get('/post',async (req,res)=>{
+  const posts=await Post.find();
+  // console.log(posts.length);
+  res.json(posts);
+})
 
 app.listen(4000,()=>{
   console.log('server is listening at port 4000.../' );
