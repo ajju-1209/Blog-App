@@ -2,23 +2,8 @@ import { useState } from "react";
 import ReactQuill from "react-quill";
 import 'react-quill/dist/quill.snow.css';
 import { Navigate } from "react-router-dom";
-
-   const modules={
-    toolbar: [
-      [{ 'header': [1, 2, false] }],
-      ['bold', 'italic', 'underline','strike', 'blockquote'],
-      [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
-      ['link', 'image'],
-      ['clean']
-    ],
-  };
-
-  const formats= [
-    'header',
-    'bold', 'italic', 'underline', 'strike', 'blockquote',
-    'list', 'bullet', 'indent',
-    'link', 'image'
-  ];
+import Editor from "../Editor";
+  
 
 const CreatePost =()=>{
 
@@ -40,6 +25,13 @@ const CreatePost =()=>{
     const response=await fetch('http://localhost:4000/post',{
       method:'POST',
       body:data,
+      //sending credentials back to server
+      //By setting credentials to include we are allowing our fetch api to send our 
+      //credentials like cookies ,basic http auth etc back to the server (Read about cors to understand this more clearly)
+      //This is nice aritcle about cors
+      //(https://javascript.plainenglish.io/understanding-the-basics-to-fetch-credentials-863b25968ed5)
+
+      credentials:'include',
     });
 
     if(response.ok){
@@ -70,10 +62,7 @@ const CreatePost =()=>{
       a module named react-quill it provides text-editor
       with many functionalities */ }
 
-      <ReactQuill 
-        onChange={newValue=>setContent(newValue)}
-        //these are options for react quill
-        modules={modules} formats={formats}/>
+      <Editor value={content} onChange={setContent}/>
       <button style={{marginTop:'5px'}}>Create post</button>
     </form>
   );

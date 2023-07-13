@@ -17,7 +17,8 @@ export default function LoginPage(){
     //sending data to server using post request
     //this is one way of doing we can also use axios instead 
     //of fetch
-    const response=await fetch('http://localhost:4000/login',{
+    console.log("Going to make req to backend...")
+    const response=await fetch('http://localhost:4000/auth/login',{
       method:'POST',
       body:JSON.stringify({username,password}),
       headers:{'Content-Type':'application/json'},

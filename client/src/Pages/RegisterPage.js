@@ -10,7 +10,7 @@ export default function RegisterPage(){
   //post request using html form or via postman(only for testing purpose).
   async function register(event){
     event.preventDefault();
-    const response=await fetch('http://localhost:4000/register',{
+    const response=await fetch('http://localhost:4000/auth/register',{
       method:'POST',
       mode:'cors',
       headers:{'Content-Type':'application/json'},

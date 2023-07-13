@@ -1,60 +1,72 @@
-import { useContext, useEffect,useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { UserContext } from "./UserContext";
 
-export default function Header(){
+export default function Header() {
+  const { setUserInfo, userInfo } = useContext(UserContext);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // const [username,setUsername]=useState(null);
-  
-  const {setUserInfo,userInfo}=useContext(UserContext);
-  
-  useEffect( ()=>{
-    //look more about credentials and fetch api
-    fetch('http://localhost:4000/profile',{
-      credentials:'include',
-    }).then((response)=>{
-      response.json().then((userInfo)=>{
-        // console.log(userInfo);
-        setUserInfo(userInfo);
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const response = await fetch("http://localhost:4000/profile", {
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const user = await response.json();
+          setUserInfo(user);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        // Handle the error or show an error message to the user
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchProfile();
+  }, []);
+
+  async function logout() {
+    try {
+      await fetch("http://localhost:4000/auth/logout", {
+        credentials: "include",
+        method: "POST",
       });
-    });
-  },[]);
 
+      setUserInfo(null);
+    } catch (error) {
+      console.error("Error logging out:", error);
+      // Handle the error or show an error message to the user
+    }
+  }
 
-  function logout(){
+  if (isLoading) {
+    // Show a loading state or spinner while fetching the user profile
+    return <div>Loading...</div>;
+  }
 
-    //doing post request and sending token to server 
-    //inorder to invalidate it so that we get logged out.
-    fetch('http://localhost:4000/logout',{
-      credentials:'include',
-      method:'POST',
-    });
+  const username = userInfo?.username;
 
-    //as we have logged out so username must be set to null
-    setUserInfo(null);
-  };
-
-  //because userInfo can be sometime null so adding ? 
-  const username=userInfo?.username;
-
-  return(
+  return (
     <header>
-        <Link to="/" className="logo">MyBlog</Link>
-        <nav>
-          {username && (
-            <>
-              <Link to="/create">Create new post</Link>
-              <a onClick={logout}>Logout</a>
-            </> 
-          )}
-          {!username && (
-            <>
-              <Link to="/login">Login</Link>
-              <Link to="/register">Register</Link>
-            </>
-          )}
-          
-        </nav>
-      </header>
-  );  
-};
+      <Link to="/" className="logo">
+        MyBlog
+      </Link>
+      <nav>
+        {username ? (
+          <>
+            <Link to="/create">Create new post</Link>
+            <a onClick={logout}>Logout</a>
+          </>
+        ) : (
+          <>
+            <Link to="/login">Login</Link>
+            <Link to="/register">Register</Link>
+          </>
+        )}
+      </nav>
+    </header>
+  );
+}
